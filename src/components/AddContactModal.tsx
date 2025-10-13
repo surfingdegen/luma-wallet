@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import Modal from './Modal';
+import { QrCode } from 'lucide-react';
+import QRScanner from './QRScanner';
 
 interface Contact {
   id: string;
@@ -22,6 +24,70 @@ export default function AddContactModal({
 }: AddContactModalProps) {
   const [label, setLabel] = useState('');
   const [address, setAddress] = useState('');
+  const [showScanner, setShowScanner] = useState(false);
+
+const handleScanResult = (result: string) => {
+    console.log('Raw QR scan result:', result);
+    
+    try {
+      // Try parsing as JSON first
+      const data = JSON.parse(result);
+      console.log('Parsed as JSON:', data);
+      
+      if (data.to) {
+        setAddress(data.to);
+        setShowScanner(false);
+        return;
+      }
+      if (data.address) {
+        setAddress(data.address);
+        setShowScanner(false);
+        return;
+      }
+    } catch {
+      // Not JSON, continue with string parsing
+    }
+    
+    let addr = result.trim();
+    console.log('Processing as string:', addr);
+    
+    // Handle Ethereum URI format: ethereum:0x...
+    if (addr.toLowerCase().startsWith('ethereum:')) {
+      addr = addr.substring(9);
+    }
+    
+    // Handle ENS/Farcaster format
+    if (addr.includes('.eth') || addr.includes('.farcaster')) {
+      // Don't process ENS names directly, show error
+      alert('ENS/Farcaster names are not supported. Please use a wallet address (0x...)');
+      return;
+    }
+    
+    // Remove chain prefix if present (e.g., eip155:1/...)
+    if (addr.includes('/')) {
+      addr = addr.split('/').pop() || addr;
+    }
+    
+    // Remove query parameters
+    if (addr.includes('?')) {
+      addr = addr.split('?')[0];
+    }
+    
+    // Remove @ symbols
+    if (addr.includes('@')) {
+      addr = addr.split('@')[0];
+    }
+    
+    // Validate it's an Ethereum address
+    if (!addr.startsWith('0x') || addr.length !== 42) {
+      alert('Invalid Ethereum address. Address must start with 0x and be 42 characters long.');
+      return;
+    }
+    
+    console.log('Final address:', addr);
+    setAddress(addr);
+    setShowScanner(false);
+  };
 
   const handleSave = () => {
     if (label && address) {
@@ -34,6 +100,10 @@ export default function AddContactModal({
       onClose();
     }
   };
+
+  if (showScanner) {
+    return <QRScanner onClose={() => setShowScanner(false)} onScan={handleScanResult} t={t} />;
+  }
 
   return (
     <Modal onClose={onClose}>
@@ -56,9 +126,18 @@ export default function AddContactModal({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            {t('address')}
-          </label>
+          <div className="flex items-center justify-between mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              {t('address')}
+            </label>
+            <button
+              onClick={() => setShowScanner(true)}
+              className="flex items-center space-x-1 text-blue-600 dark:text-blue-400 text-sm font-medium hover:text-blue-700 dark:hover:text-blue-300"
+            >
+              <QrCode className="w-4 h-4" />
+              <span>Scan QR</span>
+            </button>
+          </div>
           <input
             type="text"
             value={address}

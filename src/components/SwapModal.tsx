@@ -71,16 +71,16 @@ export default function SwapModal({ address, onClose, t }: SwapModalProps) {
 
   return (
     <Modal onClose={onClose}>
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
+	<div className="space-y-4">
+        <div className="flex items-center justify-between mb-2">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white">{t('swap')}</h2>
           <button
             onClick={() => setShowSlippage(!showSlippage)}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors mr-8"
           >
             <Info className="w-5 h-5 text-gray-500 dark:text-gray-400" />
           </button>
-        </div>
+        </div>	
 
         {showSlippage && (
           <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">

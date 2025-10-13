@@ -23,7 +23,7 @@ export default function ReceiveModal({ address, onClose, t }: ReceiveModalProps)
       <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white">{t('receive')}</h2>
       
       <div className="space-y-4">
-        <div className="flex justify-center p-6 bg-white dark:bg-gray-800 rounded-xl">
+        <div className="flex justify-center p-6 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700">
           <QRCodeSVG value={qrData} size={200} />
         </div>
 
@@ -36,8 +36,8 @@ export default function ReceiveModal({ address, onClose, t }: ReceiveModalProps)
               onClick={() => setToken('USDC')}
               className={`p-3 rounded-lg border-2 transition-all ${
                 token === 'USDC'
-                  ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20'
-                  : 'border-gray-200 dark:border-gray-700'
+                  ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20 text-gray-900 dark:text-white'
+                  : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400'
               }`}
             >
               USDC
@@ -46,8 +46,8 @@ export default function ReceiveModal({ address, onClose, t }: ReceiveModalProps)
               onClick={() => setToken('BTC')}
               className={`p-3 rounded-lg border-2 transition-all ${
                 token === 'BTC'
-                  ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20'
-                  : 'border-gray-200 dark:border-gray-700'
+                  ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20 text-gray-900 dark:text-white'
+                  : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400'
               }`}
             >
               BTC
@@ -68,10 +68,15 @@ export default function ReceiveModal({ address, onClose, t }: ReceiveModalProps)
           />
         </div>
 
-        <div className="p-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
-          <p className="text-xs text-gray-600 dark:text-gray-400 font-mono break-all">
-            {address}
-          </p>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Your Address
+          </label>
+          <div className="p-3 bg-gray-100 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
+            <p className="text-sm text-gray-900 dark:text-gray-100 font-mono break-all">
+              {address}
+            </p>
+          </div>
         </div>
       </div>
     </Modal>
