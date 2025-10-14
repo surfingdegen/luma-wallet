@@ -16,7 +16,6 @@
     "html5-qrcode": "^2.3.8",
     "i18next": "^23.7.0",
     "lucide-react": "^0.263.1",
-    "permissionless": "^0.2.57",
     "qrcode.react": "^3.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
