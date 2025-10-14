@@ -28,6 +28,7 @@ import AddContactModal from './AddContactModal';
 import SupplyModal from './SupplyModal';
 import BorrowModal from './BorrowModal';
 import { useMoonwellAccountData, useMoonwellSupplyAPY } from '../hooks/useMoonwell';
+import { useVaultBalance } from '../hooks/useVault';
 
 interface Contact {
   id: string;
@@ -340,22 +341,20 @@ function ActionButton({ icon, label, highlight = false, onClick }: any) {
 function SavingsTab({ t }: any) {
   const [showSupply, setShowSupply] = useState(false);
   const [showBorrow, setShowBorrow] = useState(false);
-
-// Add this line to get the wallet address
-  const { address } = useSmartWallet();
-
-  // Add these hooks
-  const moonwellData = useMoonwellAccountData(address);
+  const { address } = useAccount();
+  
+  // Use vault instead of Moonwell directly
+  const vaultBalance = useVaultBalance(address);
   const supplyAPY = useMoonwellSupplyAPY();
   
-const position = {
-    suppliedBTC: moonwellData.supplied.toFixed(8),
-    suppliedUSD: moonwellData.supplied * 100000, // Multiply by BTC price
-    borrowedUSDC: moonwellData.borrowed, // Now real data!
-    healthFactor: moonwellData.healthFactor, // Now real calculation!
+  const position = {
+    suppliedBTC: vaultBalance.balance.toFixed(8),
+    suppliedUSD: vaultBalance.balance * 100000, // Multiply by BTC price
+    borrowedUSDC: 0,
+    healthFactor: 999, // No liquidation risk in vault
     adjustedAPY: supplyAPY,
-    availableToBorrowUSD: moonwellData.maxBorrow,
-    wellRewards: 0
+    availableToBorrowUSD: 0, // Borrowing not available through vault
+    wellRewards: 0 // Auto-sent to dev wallet
   };
 
   const isLoading = false;

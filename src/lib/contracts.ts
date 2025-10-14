@@ -48,3 +48,4 @@ export function formatTokenAmount(amount: bigint, decimals: number): string {
   const fraction = str.slice(-decimals).replace(/0+$/, '');
   return fraction ? `${whole}.${fraction}` : whole;
 }
+export const LUMA_VAULT = import.meta.env.VITE_LUMA_VAULT_ADDRESS as Address;

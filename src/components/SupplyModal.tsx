@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import Modal from './Modal';
 import { useTokenBalances } from '../hooks/useBalances';
-import { useMoonwellSupply } from '../hooks/useMoonwell';
+import { useVaultDeposit } from '../hooks/useVault';
 import { useAccount, useWriteContract } from 'wagmi';
-import { TOKENS, MOONWELL_MARKETS } from '../lib/contracts';
+import { TOKENS, LUMA_VAULT } from '../lib/contracts';
 import { parseUnits } from 'viem';
 import toast from 'react-hot-toast';
 
@@ -16,38 +16,37 @@ export default function SupplyModal({ onClose, t }: SupplyModalProps) {
   const [amount, setAmount] = useState('');
   const { address } = useAccount();
   const balances = useTokenBalances(address);
-  const { supply, isPending, isSuccess } = useMoonwellSupply();
+  const { deposit, isPending, isSuccess } = useVaultDeposit();
   const { writeContract } = useWriteContract();
 
   const btcBalance = balances.cbBTC || '0';
 
   const handleSupply = async () => {
     try {
-      // First approve the Moonwell market to spend cbBTC
+      // First approve the vault to spend cbBTC
       const amountWei = parseUnits(amount, TOKENS.cbBTC.decimals);
       
       await writeContract({
         address: TOKENS.cbBTC.address,
         abi: TOKENS.cbBTC.abi,
         functionName: 'approve',
-        args: [MOONWELL_MARKETS.cbBTC, amountWei],
+        args: [LUMA_VAULT, amountWei],
       });
 
-      toast.success('Approval successful! Supplying...');
+      toast.success('Approval successful! Depositing...');
 
-      // Then supply
-      await supply(amount);
-      toast.success('Supply successful!');
-      onClose();
+      // Then deposit into vault
+      await deposit(amount);
+      toast.success('Deposit successful!');
     } catch (error) {
-      console.error('Supply failed:', error);
-      toast.error('Supply failed');
+      console.error('Deposit failed:', error);
+      toast.error('Deposit failed');
     }
   };
 
   React.useEffect(() => {
     if (isSuccess) {
-      toast.success('Supply confirmed!');
+      toast.success('Deposit confirmed!');
       onClose();
     }
   }, [isSuccess, onClose]);
