@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
 import Modal from './Modal';
 import { useTokenBalances } from '../hooks/useBalances';
-import { Address } from 'viem';
+import { useMoonwellSupply } from '../hooks/useMoonwell';
+import { useAccount, useWriteContract } from 'wagmi';
+import { TOKENS, MOONWELL_MARKETS } from '../lib/contracts';
+import { parseUnits } from 'viem';
+import toast from 'react-hot-toast';
 
 interface SupplyModalProps {
   onClose: () => void;
@@ -10,26 +14,43 @@ interface SupplyModalProps {
 
 export default function SupplyModal({ onClose, t }: SupplyModalProps) {
   const [amount, setAmount] = useState('');
-  const [isSupplying, setIsSupplying] = useState(false);
+  const { address } = useAccount();
+  const balances = useTokenBalances(address);
+  const { supply, isPending, isSuccess } = useMoonwellSupply();
+  const { writeContract } = useWriteContract();
 
-  // Mock balance - replace with real hook
-  const btcBalance = '0.05';
+  const btcBalance = balances.cbBTC || '0';
 
   const handleSupply = async () => {
-    setIsSupplying(true);
     try {
-      // TODO: Implement actual Moonwell supply transaction
-      console.log('Supplying', amount, 'BTC to Moonwell');
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate transaction
-      alert('Supply successful!');
+      // First approve the Moonwell market to spend cbBTC
+      const amountWei = parseUnits(amount, TOKENS.cbBTC.decimals);
+      
+      await writeContract({
+        address: TOKENS.cbBTC.address,
+        abi: TOKENS.cbBTC.abi,
+        functionName: 'approve',
+        args: [MOONWELL_MARKETS.cbBTC, amountWei],
+      });
+
+      toast.success('Approval successful! Supplying...');
+
+      // Then supply
+      await supply(amount);
+      toast.success('Supply successful!');
       onClose();
     } catch (error) {
       console.error('Supply failed:', error);
-      alert('Supply failed');
-    } finally {
-      setIsSupplying(false);
+      toast.error('Supply failed');
     }
   };
+
+  React.useEffect(() => {
+    if (isSuccess) {
+      toast.success('Supply confirmed!');
+      onClose();
+    }
+  }, [isSuccess, onClose]);
 
   return (
     <Modal onClose={onClose}>
@@ -84,10 +105,10 @@ export default function SupplyModal({ onClose, t }: SupplyModalProps) {
 
         <button
           onClick={handleSupply}
-          disabled={!amount || parseFloat(amount) <= 0 || parseFloat(amount) > parseFloat(btcBalance) || isSupplying}
+          disabled={!amount || parseFloat(amount) <= 0 || parseFloat(amount) > parseFloat(btcBalance) || isPending}
           className="w-full py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
         >
-          {isSupplying ? 'Supplying...' : t('confirm')}
+          {isPending ? 'Supplying...' : t('confirm')}
         </button>
       </div>
     </Modal>
