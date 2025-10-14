@@ -17,6 +17,19 @@ export function useMoonwellSupply() {
   const supply = async (amount: string) => {
     const amountWei = parseUnits(amount, TOKENS.cbBTC.decimals);
     
+    // First, enter markets (enable cbBTC as collateral)
+    try {
+      await writeContract({
+        address: MOONWELL_COMPTROLLER,
+        abi: MOONWELL_COMPTROLLER_ABI,
+        functionName: 'enterMarkets',
+        args: [[MOONWELL_MARKETS.cbBTC]],
+      });
+    } catch (e) {
+      console.log('Already in market or error:', e);
+    }
+    
+    // Then supply
     return writeContract({
       address: MOONWELL_MARKETS.cbBTC,
       abi: MOONWELL_MARKET_ABI,
