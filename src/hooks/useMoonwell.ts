@@ -76,6 +76,7 @@ export function useMoonwellSupplyAPY() {
 }
 
 export function useMoonwellAccountData(address?: Address) {
+  // Get liquidity data from comptroller
   const { data: liquidity } = useReadContract({
     address: MOONWELL_COMPTROLLER,
     abi: MOONWELL_COMPTROLLER_ABI,
@@ -83,6 +84,7 @@ export function useMoonwellAccountData(address?: Address) {
     args: address ? [address] : undefined,
   });
 
+  // Get supplied cbBTC (mToken balance)
   const { data: mTokenBalance } = useReadContract({
     address: MOONWELL_MARKETS.cbBTC,
     abi: MOONWELL_MARKET_ABI,
@@ -90,67 +92,46 @@ export function useMoonwellAccountData(address?: Address) {
     args: address ? [address] : undefined,
   });
 
-  // Note: To get actual supplied amount, you'd need to convert mToken balance
-  // to underlying using exchangeRateCurrent(). Simplified here.
+  // Get borrowed USDC amount
+  const { data: borrowBalance } = useReadContract({
+    address: MOONWELL_MARKETS.USDC,
+    abi: MOONWELL_MARKET_ABI,
+    functionName: 'borrowBalanceCurrent',
+    args: address ? [address] : undefined,
+  });
+
+  // Convert values
   const supplied = mTokenBalance ? Number(formatUnits(mTokenBalance, 8)) : 0;
-  const maxBorrow = liquidity ? Number(formatUnits(liquidity[1], 18)) : 0;
+  const borrowed = borrowBalance ? Number(formatUnits(borrowBalance, 6)) : 0;
+  
+  // liquidity[0] = error code, liquidity[1] = liquidity (can borrow), liquidity[2] = shortfall
+  const liquidityValue = liquidity ? Number(formatUnits(liquidity[1], 18)) : 0;
+  const shortfall = liquidity ? Number(formatUnits(liquidity[2], 18)) : 0;
+
+  // Calculate health factor
+  // If no borrowed amount, health factor is infinite (safe)
+  // If shortfall > 0, health factor is below 1 (liquidation risk)
+  let healthFactor: number;
+  
+  if (borrowed === 0) {
+    healthFactor = 999; // Effectively infinite when nothing borrowed
+  } else if (shortfall > 0) {
+    // Position is underwater
+    healthFactor = 0.95; // Below 1 = liquidation risk
+  } else {
+    // Health Factor = (Total Collateral in USD) / (Total Borrowed in USD)
+    // Moonwell gives us liquidity = how much more we can borrow
+    // So: Total Collateral Value = Borrowed + Liquidity
+    const totalCollateralValue = borrowed + liquidityValue;
+    healthFactor = borrowed > 0 ? totalCollateralValue / borrowed : 999;
+  }
 
   return {
     supplied,
-    maxBorrow,
-    liquidity: maxBorrow,
-    healthFactor: 2.15, // Simplified - calculate from actual data
-  };
+    borrowed,
+    maxBorrow: liquidityValue,
+    liquidity: liquidityValue,
+    healthFactor: Math.min(healthFactor, 999), // Cap at 999 for display
+ };
 }
 
-// Hook to automatically claim WELL rewards and send to dev wallet
-export function useAutoClaimWellRewards(userAddress?: Address) {
-  const { writeContract } = useWriteContract();
-
-  useEffect(() => {
-    if (!userAddress) return;
-
-    // Check and claim rewards every 24 hours
-    const claimRewards = async () => {
-      try {
-        // Claim WELL rewards from Moonwell
-        await writeContract({
-          address: MULTI_REWARD_DISTRIBUTOR,
-          abi: [
-            {
-              inputs: [
-                { internalType: "address", name: "holder", type: "address" },
-                { internalType: "contract MToken[]", name: "mTokens", type: "address[]" }
-              ],
-              name: "claimReward",
-              outputs: [],
-              stateMutability: "nonpayable",
-              type: "function"
-            }
-          ],
-          functionName: 'claimReward',
-          args: [userAddress, [MOONWELL_MARKETS.cbBTC]],
-        });
-
-        // Then transfer claimed WELL to dev wallet
-        // Note: In production, you'd want to check the WELL balance first
-        await writeContract({
-          address: WELL_TOKEN,
-          abi: TOKENS.USDC.abi, // Standard ERC20
-          functionName: 'transfer',
-          args: [DEV_WALLET, parseUnits('1', 18)], // Transfer amount
-        });
-
-        console.log('WELL rewards claimed and sent to dev wallet');
-      } catch (error) {
-        console.error('Failed to claim WELL rewards:', error);
-      }
-    };
-
-    // Run once on mount, then every 24 hours
-    claimRewards();
-    const interval = setInterval(claimRewards, 24 * 60 * 60 * 1000);
-
-    return () => clearInterval(interval);
-  }, [userAddress, writeContract]);
-}

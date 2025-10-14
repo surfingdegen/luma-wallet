@@ -27,7 +27,7 @@ import ContactCard from './ContactCard';
 import AddContactModal from './AddContactModal';
 import SupplyModal from './SupplyModal';
 import BorrowModal from './BorrowModal';
-import { useMoonwellAccountData, useMoonwellSupplyAPY, useAutoClaimWellRewards } from '../hooks/useMoonwell';
+import { useMoonwellAccountData, useMoonwellSupplyAPY } from '../hooks/useMoonwell';
 
 interface Contact {
   id: string;
@@ -347,16 +347,15 @@ function SavingsTab({ t }: any) {
   // Add these hooks
   const moonwellData = useMoonwellAccountData(address);
   const supplyAPY = useMoonwellSupplyAPY();
-  useAutoClaimWellRewards(address); // Automatically claims WELL rewards to dev wallet
   
-  const position = {
+const position = {
     suppliedBTC: moonwellData.supplied.toFixed(8),
     suppliedUSD: moonwellData.supplied * 100000, // Multiply by BTC price
-    borrowedUSDC: 0,
-    healthFactor: moonwellData.healthFactor,
+    borrowedUSDC: moonwellData.borrowed, // Now real data!
+    healthFactor: moonwellData.healthFactor, // Now real calculation!
     adjustedAPY: supplyAPY,
     availableToBorrowUSD: moonwellData.maxBorrow,
-    wellRewards: 0 // Auto-claimed to dev wallet
+    wellRewards: 0
   };
 
   const isLoading = false;
