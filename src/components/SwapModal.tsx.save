@@ -47,7 +47,7 @@ export default function SwapModal({ address, onClose, t }: SwapModalProps) {
   };
 
   const handleMaxAmount = () => {
-    setAmountIn(balances[tokenIn]);
+    tokenIn === 'BTCetAmountIn(balances[tokenIn]);
   };
 
   const handleApprove = async () => {
@@ -109,7 +109,7 @@ export default function SwapModal({ address, onClose, t }: SwapModalProps) {
           <div className="flex justify-between text-sm">
             <span className="text-gray-600 dark:text-gray-400">{t('from')}</span>
             <span className="text-gray-600 dark:text-gray-400">
-              Balance: {parseFloat(balances[tokenIn]).toFixed(tokenIn === 'cbBTC' ? 8 : 2)}
+              Balance: {parseFloat(balances[tokenIn]).toFixed(tokenIn === 'BTC' ? 8 : 2)}
             </span>
           </div>
           <div className="bg-gray-100 dark:bg-gray-700 rounded-xl p-4">
