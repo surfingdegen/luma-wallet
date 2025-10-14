@@ -15,14 +15,13 @@ interface SupplyModalProps {
 export default function SupplyModal({ onClose, t }: SupplyModalProps) {
   const [amount, setAmount] = useState('');
   const { address } = useAccount();
-  const balances = useTokenBalances(address);
+  const { balances: tokenBalances } = useTokenBalances(address);
   const { deposit, isPending, isSuccess } = useVaultDeposit();
   const { writeContract } = useWriteContract();
-
-  const btcBalance = balances.cbBTC || '0';
+  const btcBalance = tokenBalances?.cbBTC || '0';
   
   // Debug logs
-  console.log('SupplyModal Debug:', { address, balances, btcBalance });
+  console.log('SupplyModal Debug:', { address, tokenBalances, btcBalance });
 
   const handleSupply = async () => {
     try {
