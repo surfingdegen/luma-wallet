@@ -7,6 +7,14 @@ import { TOKENS, LUMA_VAULT } from '../lib/contracts';
 import { parseUnits } from 'viem';
 import toast from 'react-hot-toast';
 
+export default function SupplyModal({ onClose, t }: SupplyModalProps) {
+  const [amount, setAmount] = useState('');
+  const { address } = useAccount();
+  const balances = useTokenBalances(address);
+  
+  // Add this debug line
+  console.log('SupplyModal Debug:', { address, balances });
+
 interface SupplyModalProps {
   onClose: () => void;
   t: (key: string) => string;
@@ -19,10 +27,8 @@ export default function SupplyModal({ onClose, t }: SupplyModalProps) {
   const { deposit, isPending, isSuccess } = useVaultDeposit();
   const { writeContract } = useWriteContract();
 
-  const btcBalance = balances.cbBTC || '0';
-  
-  // Debug logs
-  console.log('SupplyModal Debug:', { address, balances, btcBalance });
+const btcBalance = balances.cbBTC || '0';
+console.log('BTC Balance:', btcBalance, 'Full balances:', balances);
 
   const handleSupply = async () => {
     try {
@@ -100,7 +106,7 @@ export default function SupplyModal({ onClose, t }: SupplyModalProps) {
           <div className="flex justify-between text-sm">
             <span className="text-gray-600 dark:text-gray-400">You will receive</span>
             <span className="font-medium text-gray-900 dark:text-white">
-              {amount || '0'} vault shares
+              {amount || '0'} mwBTC
             </span>
           </div>
         </div>
