@@ -341,6 +341,9 @@ function SavingsTab({ t }: any) {
   const [showSupply, setShowSupply] = useState(false);
   const [showBorrow, setShowBorrow] = useState(false);
 
+// Add this line to get the wallet address
+  const { address } = useSmartWallet();
+
   // Add these hooks
   const moonwellData = useMoonwellAccountData(address);
   const supplyAPY = useMoonwellSupplyAPY();
