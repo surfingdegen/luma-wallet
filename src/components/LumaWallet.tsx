@@ -16,6 +16,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { useSmartWallet } from '../hooks/useWallet';
+import { useAccount } from 'wagmi';
 import { useTokenBalances } from '../hooks/useBalances';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { translations } from '../lib/translations';
