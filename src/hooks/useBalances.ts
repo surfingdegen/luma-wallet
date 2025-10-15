@@ -3,12 +3,12 @@ import { TOKENS } from '../lib/contracts';
 import { Address } from 'viem';
 
 export function useTokenBalances(address: Address | undefined) {
-  const { data: usdcBalance, isLoading: isLoadingUsdc, refetch: refetchUsdc } = useBalance({
+  const { data: usdcData, isLoading: isLoadingUsdc, refetch: refetchUsdc } = useBalance({
     address,
     token: TOKENS.USDC.address,
   });
 
-  const { data: cbBtcBalance, isLoading: isLoadingCbBtc, refetch: refetchCbBtc } = useBalance({
+  const { data: cbBtcData, isLoading: isLoadingCbBtc, refetch: refetchCbBtc } = useBalance({
     address,
     token: TOKENS.cbBTC.address,
   });
@@ -19,10 +19,8 @@ export function useTokenBalances(address: Address | undefined) {
   };
 
   return {
-    balances: {
-      USDC: usdcBalance?.formatted || '0',
-      cbBTC: cbBtcBalance?.formatted || '0',
-    },
+    usdcBalance: usdcData?.formatted || '0.00',
+    btcBalance: cbBtcData?.formatted || '0.00000000',
     isLoading: isLoadingUsdc || isLoadingCbBtc,
     refetch: refetchAll,
   };

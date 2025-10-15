@@ -1,7 +1,44 @@
 import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
-import { Address, parseUnits, formatUnits } from 'viem';
-import { LUMA_VAULT_ABI } from '../lib/vaultAbi';
+import { Address, parseUnits } from 'viem';
 import { LUMA_VAULT, TOKENS } from '../lib/contracts';
+
+const VAULT_ABI = [
+  {
+    inputs: [{ name: 'account', type: 'address' }],
+    name: 'balanceOf',
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [{ name: 'amount', type: 'uint256' }],
+    name: 'deposit',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [{ name: 'amount', type: 'uint256' }],
+    name: 'withdraw',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+] as const;
+
+export function useVaultBalance(address: Address | undefined) {
+  const { data: balance } = useReadContract({
+    address: LUMA_VAULT,
+    abi: VAULT_ABI,
+    functionName: 'balanceOf',
+    args: address ? [address] : undefined,
+  });
+
+  // Convert to number safely
+  const balanceValue = balance ? Number(balance) / 1e8 : 0;
+
+  return typeof balanceValue === 'number' && !isNaN(balanceValue) ? balanceValue : 0;
+}
 
 export function useVaultDeposit() {
   const { writeContract, data: hash, isPending } = useWriteContract();
@@ -12,7 +49,7 @@ export function useVaultDeposit() {
     
     return writeContract({
       address: LUMA_VAULT,
-      abi: LUMA_VAULT_ABI,
+      abi: VAULT_ABI,
       functionName: 'deposit',
       args: [amountWei],
     });
@@ -25,52 +62,16 @@ export function useVaultWithdraw() {
   const { writeContract, data: hash, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
-  const withdraw = async (shares: string) => {
-    const sharesWei = parseUnits(shares, TOKENS.cbBTC.decimals);
+  const withdraw = async (amount: string) => {
+    const amountWei = parseUnits(amount, TOKENS.cbBTC.decimals);
     
     return writeContract({
       address: LUMA_VAULT,
-      abi: LUMA_VAULT_ABI,
+      abi: VAULT_ABI,
       functionName: 'withdraw',
-      args: [sharesWei],
+      args: [amountWei],
     });
   };
 
   return { withdraw, isPending: isPending || isConfirming, isSuccess, hash };
-}
-
-export function useVaultBalance(address?: Address) {
-  const { data: balance } = useReadContract({
-    address: LUMA_VAULT,
-    abi: LUMA_VAULT_ABI,
-    functionName: 'getUserBalance',
-    args: address ? [address] : undefined,
-  });
-
-  const { data: shares } = useReadContract({
-    address: LUMA_VAULT,
-    abi: LUMA_VAULT_ABI,
-    functionName: 'userShares',
-    args: address ? [address] : undefined,
-  });
-
-  return {
-    balance: balance ? Number(formatUnits(balance, TOKENS.cbBTC.decimals)) : 0,
-    shares: shares ? Number(formatUnits(shares, TOKENS.cbBTC.decimals)) : 0,
-  };
-}
-
-export function useClaimWellRewards() {
-  const { writeContract, data: hash, isPending } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
-
-  const claimRewards = async () => {
-    return writeContract({
-      address: LUMA_VAULT,
-      abi: LUMA_VAULT_ABI,
-      functionName: 'claimWellRewards',
-    });
-  };
-
-  return { claimRewards, isPending: isPending || isConfirming, isSuccess };
 }

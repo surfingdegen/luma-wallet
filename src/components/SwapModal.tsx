@@ -9,16 +9,19 @@ interface SwapModalProps {
   address: Address | undefined;
   onClose: () => void;
   t: (key: string) => string;
+  usdcBalance: string;
+  btcBalance: string;
 }
 
-export default function SwapModal({ address, onClose, t }: SwapModalProps) {
-  const [tokenIn, setTokenIn] = useState<'USDC' | 'BTC'>('USDC');
-  const [tokenOut, setTokenOut] = useState<'USDC' | 'BTC'>('BTC');
+export default function SwapModal({ address, onClose, t, usdcBalance, btcBalance }: SwapModalProps) {
+  const [tokenIn, setTokenIn] = useState<'USDC' | 'cbBTC'>('USDC');
+  const [tokenOut, setTokenOut] = useState<'USDC' | 'cbBTC'>('cbBTC');
   const [amountIn, setAmountIn] = useState('');
   const [slippage, setSlippage] = useState(0.5);
   const [showSlippage, setShowSlippage] = useState(false);
 
-  const { balances } = useTokenBalances(address);
+  // Create balances object from props
+  const balances = { USDC: usdcBalance, cbBTC: btcBalance };
   const {
     quote,
     isLoadingQuote,

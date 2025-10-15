@@ -3,6 +3,7 @@ import { Address, parseUnits, formatUnits } from 'viem';
 import { MOONWELL_MARKET_ABI, MOONWELL_COMPTROLLER_ABI } from '../lib/moonwellAbi';
 import { MOONWELL_MARKETS, TOKENS, DEV_WALLET } from '../lib/contracts';
 import { useEffect } from 'react';
+import { useVaultBalance } from './useVault';  // <-- ADD THIS LINE
 
 const MOONWELL_COMPTROLLER = '0xfBb21d0380beE3312B33c4353c8936a0F13EF26C' as Address;
 const WELL_TOKEN = '0xA88594D404727625A9437C3f886C7643872296AE' as Address;
@@ -84,54 +85,37 @@ export function useMoonwellAccountData(address?: Address) {
     args: address ? [address] : undefined,
   });
 
-  // Get supplied cbBTC (mToken balance)
-  const { data: mTokenBalance } = useReadContract({
-    address: MOONWELL_MARKETS.cbBTC,
-    abi: MOONWELL_MARKET_ABI,
-    functionName: 'balanceOf',
-    args: address ? [address] : undefined,
-  });
-
-  // Get borrowed USDC amount
+  // Get borrowed USDC
   const { data: borrowBalance } = useReadContract({
     address: MOONWELL_MARKETS.USDC,
     abi: MOONWELL_MARKET_ABI,
-    functionName: 'borrowBalanceCurrent',
+    functionName: 'borrowBalanceStored',
     args: address ? [address] : undefined,
   });
 
-  // Convert values
-  const supplied = mTokenBalance ? Number(formatUnits(mTokenBalance, 8)) : 0;
-  const borrowed = borrowBalance ? Number(formatUnits(borrowBalance, 6)) : 0;
-  
-  // liquidity[0] = error code, liquidity[1] = liquidity (can borrow), liquidity[2] = shortfall
-  const liquidityValue = liquidity ? Number(formatUnits(liquidity[1], 18)) : 0;
-  const shortfall = liquidity ? Number(formatUnits(liquidity[2], 18)) : 0;
+  // Get supplied BTC (from vault balance)
+  const vaultBalance = useVaultBalance(address);
 
-  // Calculate health factor
-  // If no borrowed amount, health factor is infinite (safe)
-  // If shortfall > 0, health factor is below 1 (liquidation risk)
-  let healthFactor: number;
+  // Safe defaults
+  const borrowed = borrowBalance ? Number(borrowBalance) / 1e6 : 0;
+  const supplied = vaultBalance || 0;
   
-  if (borrowed === 0) {
-    healthFactor = 999; // Effectively infinite when nothing borrowed
-  } else if (shortfall > 0) {
-    // Position is underwater
-    healthFactor = 0.95; // Below 1 = liquidation risk
-  } else {
-    // Health Factor = (Total Collateral in USD) / (Total Borrowed in USD)
-    // Moonwell gives us liquidity = how much more we can borrow
-    // So: Total Collateral Value = Borrowed + Liquidity
-    const totalCollateralValue = borrowed + liquidityValue;
-    healthFactor = borrowed > 0 ? totalCollateralValue / borrowed : 999;
+  // Calculate health factor safely
+  const liquidityValue = liquidity?.[1] ? Number(liquidity[1]) / 1e18 : 0;
+  const shortfallValue = liquidity?.[2] ? Number(liquidity[2]) / 1e18 : 0;
+  
+  let healthFactor = 999;
+  if (borrowed > 0) {
+    healthFactor = liquidityValue > 0 ? liquidityValue / (borrowed * 0.75) : 999;
   }
 
-  return {
-    supplied,
-    borrowed,
-    maxBorrow: liquidityValue,
-    liquidity: liquidityValue,
-    healthFactor: Math.min(healthFactor, 999), // Cap at 999 for display
- };
-}
+  // Available to borrow (75% of collateral value minus already borrowed)
+  const availableToBorrow = Math.max(0, (supplied * 0.75) - borrowed);
 
+  return {
+    supplied: typeof supplied === 'number' ? supplied : 0,
+    borrowed: typeof borrowed === 'number' ? borrowed : 0,
+    healthFactor: typeof healthFactor === 'number' ? healthFactor : 999,
+    availableToBorrow: typeof availableToBorrow === 'number' ? availableToBorrow : 0,
+  };
+}   

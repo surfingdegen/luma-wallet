@@ -16,7 +16,8 @@ export default function BorrowModal({ onClose, maxBorrow, t }: BorrowModalProps)
   const [amount, setAmount] = useState('');
   const { address } = useAccount();
   const { borrow, isPending, isSuccess } = useMoonwellBorrow();
-  const { liquidity } = useMoonwellAccountData(address);
+  const accountData = useMoonwellAccountData(address);
+  const availableLiquidity = accountData.availableToBorrow || 0;
 
   // Calculate health factor
   const currentHealth = 2.15; // This should be calculated from actual data
@@ -50,6 +51,34 @@ export default function BorrowModal({ onClose, maxBorrow, t }: BorrowModalProps)
     }
   }, [isSuccess, onClose]);
 
+// Check if user has supplied collateral
+  if (accountData.supplied === 0) {
+    return (
+      <Modal onClose={onClose}>
+        <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white">
+          Borrow USDC
+        </h2>
+        
+        <div className="p-6 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+          <AlertTriangle className="w-12 h-12 text-yellow-600 dark:text-yellow-400 mx-auto mb-4" />
+          <h3 className="text-center font-semibold text-gray-900 dark:text-white mb-2">
+            No Collateral Supplied
+          </h3>
+          <p className="text-center text-sm text-gray-700 dark:text-gray-300">
+            You need to supply BTC as collateral before you can borrow USDC. Go to the Loans tab and click "+ Supply" to add BTC collateral.
+          </p>
+        </div>
+        
+        <button
+          onClick={onClose}
+          className="w-full mt-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors"
+        >
+          Got it
+        </button>
+      </Modal>
+    );
+  }
+
   return (
     <Modal onClose={onClose}>
       <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white">
@@ -61,7 +90,7 @@ export default function BorrowModal({ onClose, maxBorrow, t }: BorrowModalProps)
           <div className="flex justify-between text-sm mb-1">
             <span className="text-gray-600 dark:text-gray-400">Max Available</span>
             <span className="font-medium text-gray-900 dark:text-white">
-              ${liquidity.toFixed(2)}
+	    ${availableLiquidity.toFixed(2)}
             </span>
           </div>
           <p className="text-xs text-gray-500 dark:text-gray-400">

@@ -12,9 +12,9 @@ export const config = createConfig({
     }),
   ],
   transports: {
-    [base.id]: http('https://mainnet.base.org'), // Use regular Base RPC
+    [base.id]: http('https://mainnet.base.org'),
   },
 });
 
-// Pimlico config for later use
+// Pimlico API key
 export const PIMLICO_API_KEY = import.meta.env.VITE_PIMLICO_API_KEY || '';

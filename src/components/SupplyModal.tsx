@@ -10,18 +10,17 @@ import toast from 'react-hot-toast';
 interface SupplyModalProps {
   onClose: () => void;
   t: (key: string) => string;
+  btcBalance: string;
 }
 
-export default function SupplyModal({ onClose, t }: SupplyModalProps) {
+export default function SupplyModal({ onClose, t, btcBalance }: SupplyModalProps) {
   const [amount, setAmount] = useState('');
   const { address } = useAccount();
-  const { balances: tokenBalances } = useTokenBalances(address);
   const { deposit, isPending, isSuccess } = useVaultDeposit();
   const { writeContract } = useWriteContract();
-  const btcBalance = tokenBalances?.cbBTC || '0';
   
   // Debug logs
-  console.log('SupplyModal Debug:', { address, tokenBalances, btcBalance });
+  console.log('SupplyModal Debug:', { address, btcBalance });
 
   const handleSupply = async () => {
     try {
