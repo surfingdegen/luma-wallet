@@ -1,20 +1,31 @@
 import { createConfig, http } from 'wagmi';
 import { base } from 'wagmi/chains';
-import { coinbaseWallet } from 'wagmi/connectors';
+import { createCDPEmbeddedWalletConnector } from '@coinbase/cdp-wagmi';
+import { Config } from '@coinbase/cdp-core';
 
-export const config = createConfig({
-  chains: [base],
-  connectors: [
-    coinbaseWallet({
-      appName: 'Luma Wallet',
-      preference: 'smartWalletOnly',
-      version: '4',
-    }),
-  ],
-  transports: {
-    [base.id]: http('https://mainnet.base.org'),
+// CDP Embedded Wallet configuration
+const cdpConfig: Config = {
+  projectId: import.meta.env.VITE_CDP_PROJECT_ID,
+  ethereum: {
+    createOnLogin: 'smart',
+  },
+};
+
+// Create CDP Embedded Wallet connector
+const connector = createCDPEmbeddedWalletConnector({
+  cdpConfig,
+  providerConfig: {
+    chains: [base],
+    transports: {
+      [base.id]: http(import.meta.env.VITE_BASE_RPC_URL),
+    },
   },
 });
 
-// Pimlico API key
-export const PIMLICO_API_KEY = import.meta.env.VITE_PIMLICO_API_KEY || '';
+export const config = createConfig({
+  chains: [base],
+  connectors: [connector],
+  transports: {
+    [base.id]: http(import.meta.env.VITE_BASE_RPC_URL),
+  },
+});
