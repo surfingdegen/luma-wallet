@@ -65,13 +65,43 @@ export function useMoonwellSupplyAPY() {
     address: MOONWELL_MARKETS.cbBTC,
     abi: MOONWELL_MARKET_ABI,
     functionName: 'supplyRatePerTimestamp',
+});
+
+  // Convert per-timestamp rate to APY
+  // Moonwell uses per-second rates on Base
+  const apy = supplyRate 
+    ? Number(supplyRate) * 31536000 / 1e18 * 100
+    : 4.5; // fallback to ~4.5% if data not loaded
+
+  return apy;
+}
+export function useMoonwellUSDCSupplyAPY() {
+  const { data: supplyRate } = useReadContract({
+    address: MOONWELL_MARKETS.USDC,
+    abi: MOONWELL_MARKET_ABI,
+    functionName: 'supplyRatePerTimestamp',
   });
 
   // Convert per-timestamp rate to APY
   // Moonwell uses per-second rates on Base
   const apy = supplyRate 
-    ? Number(supplyRate) * 31536000 / 1e18 * 100 // seconds per year
-    : 4.5; // fallback to ~4.5% if data not loaded
+    ? Number(supplyRate) * 31536000 / 1e18 * 100
+    : 3.5; // fallback to ~3.5% if data not loaded
+
+  return apy;
+}
+
+export function useMoonwellBorrowAPY() {
+  const { data: borrowRate } = useReadContract({
+    address: MOONWELL_MARKETS.USDC,
+    abi: MOONWELL_MARKET_ABI,
+    functionName: 'borrowRatePerTimestamp',
+  });
+
+  // Convert per-timestamp rate to APY
+  const apy = borrowRate 
+    ? Number(borrowRate) * 31536000 / 1e18 * 100
+    : 8.0; // fallback
 
   return apy;
 }

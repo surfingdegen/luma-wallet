@@ -54,20 +54,20 @@ export default function SupplyModal({ onClose, t, btcBalance }: SupplyModalProps
 
   return (
     <Modal onClose={onClose}>
-      <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white">
-        {t('supply')} BTC
+<h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white">
+        {t('supplyBTC')}
       </h2>
       
       <div className="space-y-4">
         <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
           <div className="flex justify-between text-sm mb-1">
-            <span className="text-gray-600 dark:text-gray-400">Available Balance</span>
+	    <span className="text-gray-600 dark:text-gray-400">{t('availableBalance')}</span>
             <span className="font-medium text-gray-900 dark:text-white">
               {parseFloat(btcBalance).toFixed(8)} BTC
             </span>
           </div>
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            Supply BTC as collateral to borrow USDC
+            {t('supplyBTCToEarn')}
           </p>
         </div>
 
@@ -96,9 +96,9 @@ export default function SupplyModal({ onClose, t, btcBalance }: SupplyModalProps
 
         <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600 dark:text-gray-400">You will receive</span>
+            <span className="text-gray-600 dark:text-gray-400">{t('youWillReceive')}</span>
             <span className="font-medium text-gray-900 dark:text-white">
-              {amount || '0'} vault shares
+              {amount || '0'} {t('vaultShares')}
             </span>
           </div>
         </div>
@@ -108,7 +108,7 @@ export default function SupplyModal({ onClose, t, btcBalance }: SupplyModalProps
           disabled={!amount || parseFloat(amount) <= 0 || parseFloat(amount) > parseFloat(btcBalance) || isPending}
           className="w-full py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
         >
-          {isPending ? 'Supplying...' : t('confirm')}
+          {isPending ? t('supplying') : t('confirm')}
         </button>
       </div>
     </Modal>

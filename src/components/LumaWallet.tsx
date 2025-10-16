@@ -32,6 +32,10 @@ import SupplyUSDCModal from './SupplyUSDCModal';
 import USDCSavings from './USDCSavings';
 import { useMoonwellAccountData, useMoonwellSupplyAPY } from '../hooks/useMoonwell';
 import { useVaultBalance } from '../hooks/useVault';
+import { useUSDCVaultBalance } from '../hooks/useUSDCVault';
+import { useMoonwellUSDCSupplyAPY } from '../hooks/useMoonwell';
+import USDCSupplyModal from './USDCSupplyModal';
+
 
 interface Contact {
   id: string;
@@ -62,6 +66,9 @@ export default function LumaWallet() {
   const { supplied, borrowed, healthFactor, availableToBorrow } = useMoonwellAccountData(address);
   const moonwellAPY = useMoonwellSupplyAPY();
   const vaultBalance = useVaultBalance(address);
+  const usdcVaultBalance = useUSDCVaultBalance(address);
+  const usdcAPY = useMoonwellUSDCSupplyAPY();
+
 
   useEffect(() => {
     if (isDark) {
@@ -164,10 +171,10 @@ export default function LumaWallet() {
         </div>
       </header>
 
-      {/* Tabs */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex space-x-8">
+{/* Tabs */}
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
+          <div className="flex space-x-2 sm:space-x-8 min-w-min">
             <TabButton
               active={activeTab === 'checking'}
               onClick={() => setActiveTab('checking')}
@@ -210,12 +217,12 @@ export default function LumaWallet() {
             </div>
 
             {/* USDC Savings Card */}
-	    <USDCSavings
-              balance="0.00"
-              apy={3.5}
-              onSupply={() => setShowSupplyUSDC(true)}
-              t={t}
-            />
+		<USDCSavings
+                balance={usdcVaultBalance.balance.toFixed(2)}
+                apy={usdcAPY}
+                onSupply={() => setShowSupplyUSDC(true)}
+                 t={t}
+              />
 
             {/* BTC Card */}
             <div className="bg-white dark:bg-gray-800 rounded-xl p-4 h-32 border border-gray-200 dark:border-gray-700">
@@ -344,22 +351,21 @@ export default function LumaWallet() {
         {activeTab === 'contacts' && (
           <div className="space-y-4">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{t('contacts')}</h2>
+	  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{t('contacts')}</h2>
               <button
                 onClick={() => setShowAddContact(true)}
-                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium"
               >
-                <Plus className="w-4 h-4" />
-                <span>Add Contact</span>
+                + {t('addContact')}
               </button>
             </div>
 
             {contacts.length === 0 ? (
               <div className="text-center py-12">
-                <User className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                <p className="text-gray-600 dark:text-gray-400">No contacts yet</p>
-                <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
-                  Add contacts to send crypto quickly
+		<User className="w-16 h-16 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
+                <p className="text-gray-500 dark:text-gray-400 mb-2">{t('noContacts')}</p>
+                <p className="text-sm text-gray-400 dark:text-gray-500">
+                  {t('addContactsDesc')}
                 </p>
               </div>
             ) : (
@@ -381,7 +387,7 @@ export default function LumaWallet() {
       </main>
 
       {/* Modals */}
-      {showSend && <SendModal onClose={() => setShowSend(false)} t={t} contacts={contacts} />}
+      {showSend && <SendModal onClose={() => setShowSend(false)} t={t} contacts={contacts} usdcBalance={usdcBalance} btcBalance={btcBalance} />}
       {showReceive && <ReceiveModal onClose={() => setShowReceive(false)} address={address} t={t} />}
       {showSwap && <SwapModal onClose={() => setShowSwap(false)} address={address} t={t} usdcBalance={usdcBalance} btcBalance={btcBalance} />}
       {showQRScanner && <QRScanner onClose={() => setShowQRScanner(false)} onScan={(address) => {
@@ -400,14 +406,14 @@ function TabButton({ active, onClick, icon: Icon, label }: any) {
   return (
     <button
       onClick={onClick}
-      className={`flex items-center space-x-2 px-4 py-4 border-b-2 transition-colors ${
+      className={`flex items-center space-x-1 sm:space-x-2 px-3 sm:px-4 py-4 border-b-2 transition-colors whitespace-nowrap flex-shrink-0 ${
         active
           ? 'border-blue-600 text-blue-600 dark:text-blue-400'
           : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
       }`}
     >
-      <Icon className="w-5 h-5" />
-      <span className="font-medium">{label}</span>
+      <Icon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+      <span className="font-medium text-sm sm:text-base">{label}</span>
     </button>
   );
 }
